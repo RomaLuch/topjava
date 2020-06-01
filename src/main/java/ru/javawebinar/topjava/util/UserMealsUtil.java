@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -37,7 +38,6 @@ public class UserMealsUtil {
             LocalTime endTime,
             int caloriesPerDay
     ) {
-        // TODO return filtered list with excess. Implement by cycles
         Map<LocalDate, Integer> excess = new HashMap<>();
 
         meals.forEach(it ->
@@ -69,7 +69,26 @@ public class UserMealsUtil {
             LocalTime endTime,
             int caloriesPerDay
     ) {
-        // TODO Implement by streams
-        return null;
+
+        Map<LocalDate, Integer> excess = meals
+                .stream()
+                .collect(
+                        Collectors.groupingBy(
+                                it -> it.getDateTime().toLocalDate(),
+                                Collectors.summingInt(UserMeal::getCalories)
+                        )
+                );
+
+        return meals
+                .stream()
+                .filter(it -> TimeUtil.isBetweenHalfOpen(it.getDateTime().toLocalTime(), startTime, endTime))
+                .map(it ->
+                        new UserMealWithExcess(
+                                it.getDateTime(),
+                                it.getDescription(),
+                                it.getCalories(),
+                                excess.get(it.getDateTime().toLocalDate()) > caloriesPerDay
+                        ))
+                .collect(Collectors.toList());
     }
 }
